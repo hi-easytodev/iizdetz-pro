@@ -49,13 +49,6 @@ export const RESEARCH_SOURCES = {
     'hashnode.com',
   ],
 
-  // Russian sources
-  RUSSIAN: [
-    'vc.ru',
-    'habr.com',
-    'vk.com',
-  ],
-
   // News & Blogs
   NEWS: [
     'techcrunch.com',
@@ -91,7 +84,6 @@ export const RESEARCH_PRESETS = {
     ...RESEARCH_SOURCES.VIDEO,
     ...RESEARCH_SOURCES.MESSAGING,
     ...RESEARCH_SOURCES.FORUMS,
-    ...RESEARCH_SOURCES.RUSSIAN,
     ...RESEARCH_SOURCES.NEWS,
     ...RESEARCH_SOURCES.REVIEWS,
     ...RESEARCH_SOURCES.ANALYTICS,
@@ -121,13 +113,6 @@ export const RESEARCH_PRESETS = {
     'producthunt.com',
     'g2.com',
     'capterra.com',
-  ],
-
-  // Русскоязычные источники
-  RUSSIAN_FOCUS: [
-    ...RESEARCH_SOURCES.RUSSIAN,
-    'youtube.com',
-    't.me',
   ],
 };
 
@@ -306,11 +291,11 @@ export class PerplexityClient {
    * Использует online модель с citations и related questions
    *
    * Поиск проводится по ВСЕМ доступным источникам:
-   * - YouTube, Telegram, форумы, паблики
-   * - Reddit, Twitter/X, LinkedIn
-   * - Новости, блоги, подкасты
-   * - Отзывы пользователей (G2, App Store, Play Store)
-   * - Русскоязычные источники (VC.ru, Habr, VK)
+   * - YouTube, Telegram, forums, communities
+   * - Reddit, Twitter/X, LinkedIn, Facebook, Instagram
+   * - News, blogs, podcasts
+   * - User reviews (G2, App Store, Play Store)
+   * - Startup platforms (Product Hunt, Y Combinator, Indie Hackers)
    */
   async deepResearch(
     topic: string,
@@ -318,7 +303,7 @@ export class PerplexityClient {
       searchRecency?: 'month' | 'week' | 'day' | 'hour';
       searchDomains?: string[];
       includeRelatedQuestions?: boolean;
-      preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor' | 'russian';
+      preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor';
     }
   ): Promise<{
     analysis: string;
@@ -342,9 +327,6 @@ export class PerplexityClient {
         case 'competitor':
           searchDomains = RESEARCH_PRESETS.COMPETITOR_RESEARCH;
           break;
-        case 'russian':
-          searchDomains = RESEARCH_PRESETS.RUSSIAN_FOCUS;
-          break;
       }
     }
 
@@ -359,14 +341,15 @@ export class PerplexityClient {
         content: `You are a professional researcher conducting deep analysis across ALL available sources.
 
 SEARCH COMPREHENSIVELY across:
-- Social media (Reddit, Twitter/X, LinkedIn, Facebook, Instagram, VK)
+- Social media (Reddit, Twitter/X, LinkedIn, Facebook, Instagram)
 - Video platforms (YouTube channels AND comments, TikTok, podcasts)
 - Messaging platforms (Telegram channels and public groups, Discord, Slack)
-- Forums (Hacker News, Quora, Stack Overflow, Dev.to, Habr)
-- News & blogs (TechCrunch, Medium, Substack, VC.ru)
-- Reviews & feedback (G2, Capterra, App Store, Google Play reviews)
+- Forums (Hacker News, Quora, Stack Overflow, Dev.to)
+- News & blogs (TechCrunch, Medium, Substack, VentureBeat, The Verge)
+- Reviews & feedback (G2, Capterra, Trustpilot, App Store, Google Play reviews)
 - Startup platforms (Product Hunt, Indie Hackers, Y Combinator)
 
+Focus on US market trends and opportunities.
 Provide comprehensive, well-researched information with citations from diverse sources.
 Be thorough, objective, and cite all sources including video, social, and messaging platforms.`,
       },
@@ -440,7 +423,7 @@ function getClient(): PerplexityClient {
 /**
  * Deep Research - главная функция для анализа идей
  *
- * Поиск по ВСЕМ источникам: YouTube, Telegram, форумы, паблики, соцсети
+ * Поиск по ВСЕМ источникам: YouTube, Telegram, Reddit, forums, social media, reviews
  *
  * @param topic - Тема для исследования
  * @param options - Опции поиска
@@ -449,10 +432,10 @@ function getClient(): PerplexityClient {
  * @param options.searchDomains - Кастомный список доменов
  *
  * @example
- * // Поиск идей (YouTube, Telegram, Reddit, форумы)
+ * // Поиск идей (YouTube, Telegram, Reddit, forums)
  * await deepResearch('AI business ideas 2025', { preset: 'idea_discovery' });
  *
- * // Анализ рынка (новости, аналитика, Crunchbase)
+ * // Анализ рынка (news, analytics, Crunchbase)
  * await deepResearch('EdTech market size', { preset: 'market_analysis' });
  *
  * // Все источники
@@ -463,7 +446,7 @@ export async function deepResearch(
   options?: {
     searchRecency?: 'month' | 'week' | 'day' | 'hour';
     searchDomains?: string[];
-    preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor' | 'russian';
+    preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor';
   }
 ): Promise<{
   analysis: string;

@@ -3,17 +3,19 @@
 import { useState } from 'react';
 import { IdeaCard } from '@/components/IdeaCard';
 import { Button } from '@/components/ui/button';
+import { NichePicker, type NicheId } from '@/components/NichePicker';
 import { ChevronDown, Star } from 'lucide-react';
 import type { IdeaCardProps } from '@/types';
 
 // Моковые данные для демонстрации
-const mockIdeas: IdeaCardProps[] = [
+const mockIdeas: (IdeaCardProps & { niche: NicheId })[] = [
   {
     id: 1,
     title: 'AI-платформа для автоматизации создания контента в соцсетях',
     description: 'Автоматизируйте создание постов, сторис и видео для всех социальных сетей с помощью AI. Экономьте 20+ часов в неделю.',
     arrRange: '$600K-$780K ARR',
     categories: ['AI', 'SaaS', 'Marketing'],
+    niche: 'ai',
     reactions: [
       { emoji: '👍', count: 24 },
       { emoji: '🔥', count: 18 },
@@ -35,6 +37,7 @@ const mockIdeas: IdeaCardProps[] = [
     description: 'Интерактивная платформа с геймификацией для обучения детей 7-14 лет основам программирования на Python, JavaScript и Scratch.',
     arrRange: '$1.2M-$1.8M ARR',
     categories: ['EdTech', 'B2C', 'Gamification'],
+    niche: 'edtech',
     reactions: [
       { emoji: '🎮', count: 42 },
       { emoji: '💻', count: 31 },
@@ -56,6 +59,7 @@ const mockIdeas: IdeaCardProps[] = [
     description: 'AI-инструмент для HR и менеджеров, который анализирует продуктивность команд, выявляет burnout и предлагает решения.',
     arrRange: '$500K-$900K ARR',
     categories: ['B2B', 'HR Tech', 'AI', 'Analytics'],
+    niche: 'b2b',
     reactions: [
       { emoji: '📊', count: 19 },
       { emoji: '💼', count: 15 },
@@ -76,6 +80,7 @@ const mockIdeas: IdeaCardProps[] = [
     description: 'Платформа, которая использует AI для идеального матчинга фрилансеров с проектами на основе навыков, опыта и предпочтений.',
     arrRange: '$800K-$1.3M ARR',
     categories: ['Marketplace', 'AI', 'Freelance'],
+    niche: 'saas',
     reactions: [
       { emoji: '💰', count: 38 },
       { emoji: '🚀', count: 29 },
@@ -97,6 +102,7 @@ const mockIdeas: IdeaCardProps[] = [
     description: 'Простое решение для оцифровки и автоматизации документов: договоры, счета, накладные. Интеграция с 1С и другими системами.',
     arrRange: '$400K-$650K ARR',
     categories: ['B2B', 'SaaS', 'Legal Tech'],
+    niche: 'saas',
     reactions: [
       { emoji: '📄', count: 16 },
       { emoji: '✅', count: 14 },
@@ -117,6 +123,7 @@ const mockIdeas: IdeaCardProps[] = [
     description: 'Приложение, которое анализирует данные о здоровье, создает персонализированные планы питания и рекомендует рецепты.',
     arrRange: '$700K-$1.1M ARR',
     categories: ['HealthTech', 'AI', 'B2C', 'Mobile'],
+    niche: 'healthtech',
     reactions: [
       { emoji: '🍎', count: 33 },
       { emoji: '💪', count: 27 },
@@ -137,10 +144,11 @@ const mockIdeas: IdeaCardProps[] = [
 export default function HomePage() {
   const [sortBy, setSortBy] = useState<'score' | 'created_at'>('score');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedNiche, setSelectedNiche] = useState<NicheId>('all');
 
-  const filteredIdeas = showFavoritesOnly
-    ? mockIdeas.filter((idea) => idea.isFavorite)
-    : mockIdeas;
+  const filteredIdeas = mockIdeas
+    .filter((idea) => selectedNiche === 'all' || idea.niche === selectedNiche)
+    .filter((idea) => !showFavoritesOnly || idea.isFavorite);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -152,6 +160,11 @@ export default function HomePage() {
         <p className="text-[var(--text-secondary)] text-lg">
           {filteredIdeas.length} готовых бизнес-планов
         </p>
+      </div>
+
+      {/* Niche Picker */}
+      <div className="mb-8">
+        <NichePicker selectedNiche={selectedNiche} onNicheChange={setSelectedNiche} />
       </div>
 
       {/* Filters */}

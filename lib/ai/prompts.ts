@@ -55,7 +55,7 @@ RESEARCH FOCUS:
    - Video podcasts (My First Million, All-In, etc.)
 
    **Messaging Platforms:**
-   - Telegram channels (startup, бизнес, технологии)
+   - Telegram channels (startup, tech, business)
    - Telegram groups discussions
    - Discord servers (startup communities)
    - Slack communities
@@ -66,8 +66,6 @@ RESEARCH FOCUS:
    - Quora business questions
    - Dev.to community
    - GitHub Discussions
-   - Habr (ru) tech discussions
-   - VC.ru (ru) startup news
 
    **News & Blogs:**
    - TechCrunch, VentureBeat
@@ -76,18 +74,13 @@ RESEARCH FOCUS:
    - Substack newsletters
    - Tech blogs and personal blogs
 
-   **Russian-language sources:**
-   - VC.ru статьи и комментарии
-   - Habr публикации
-   - Telegram каналы (IT, бизнес, стартапы)
-   - VK паблики (бизнес-идеи)
-   - YouTube каналы на русском
-
    **Industry-specific:**
    - AngelList job postings (what companies are hiring for)
    - Crunchbase funding announcements
    - G2 and Capterra reviews (gaps in existing tools)
    - App Store / Google Play reviews (user pain points)
+
+   **TARGET MARKET: Focus on US market trends, opportunities, and pain points.**
 
 3. **What to look for**:
    - Problems people are actively discussing
