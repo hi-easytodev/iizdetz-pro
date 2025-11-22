@@ -34,6 +34,142 @@ export interface StageResult {
   citations: string[];
   relatedQuestions: string[];
   completedAt: Date;
+  summary?: StageSummary; // Structured extraction для следующих этапов
+}
+
+// ============================================
+// STRUCTURED SUMMARIES ДЛЯ PIPELINE OPTIMIZATION
+// ============================================
+
+export type StageSummary =
+  | MarketStageSummary
+  | DemandStageSummary
+  | CommunitiesStageSummary
+  | CompetitionStageSummary
+  | ForecastStageSummary
+  | GtmStageSummary
+  | TechStageSummary
+  | CustomersStageSummary;
+
+// Stage 1: Market Analysis Summary
+export interface MarketStageSummary {
+  stage: 'market';
+  tam: string; // e.g., "$50B"
+  sam: string; // e.g., "$5B"
+  som: string; // e.g., "$500M"
+  growthRate: string; // e.g., "15% CAGR"
+  keyTrends: string[]; // Top 3-5 trends
+  targetSegments: string[]; // Key customer segments
+  marketMaturity: 'emerging' | 'growth' | 'mature' | 'declining';
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 2: Demand Analysis Summary
+export interface DemandStageSummary {
+  stage: 'demand';
+  searchVolume: string; // e.g., "50K monthly"
+  demandTrend: 'rising' | 'stable' | 'declining';
+  painPoints: string[]; // Top 5 pain points
+  currentSolutions: string[]; // Existing workarounds
+  willingnessToPay: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 3: Communities Summary
+export interface CommunitiesStageSummary {
+  stage: 'communities';
+  mainCommunities: Array<{
+    name: string;
+    platform: string;
+    size: string;
+    engagement: 'high' | 'medium' | 'low';
+  }>;
+  influencers: string[]; // Top 3-5 influencers
+  discussions: string[]; // Key discussion topics
+  sentiment: 'positive' | 'neutral' | 'negative';
+  acquisitionChannels: string[]; // Where to find customers
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 4: Competition Summary
+export interface CompetitionStageSummary {
+  stage: 'competition';
+  directCompetitors: Array<{
+    name: string;
+    pricing: string;
+    strengths: string[];
+    weaknesses: string[];
+  }>;
+  indirectCompetitors: string[];
+  marketGaps: string[]; // Opportunities
+  competitiveAdvantage: string[]; // Our differentiators
+  threatLevel: 'high' | 'medium' | 'low';
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 5: Forecast Summary
+export interface ForecastStageSummary {
+  stage: 'forecast';
+  arrProjections: {
+    year1: string;
+    year2: string;
+    year3: string;
+  };
+  userGrowth: {
+    year1: string;
+    year2: string;
+    year3: string;
+  };
+  keyMetrics: {
+    cac: string;
+    ltv: string;
+    ltvCacRatio: string;
+    churnRate: string;
+  };
+  breakeven: string; // e.g., "Month 18"
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 6: GTM Strategy Summary
+export interface GtmStageSummary {
+  stage: 'gtm';
+  launchChannels: string[]; // Top 3-5 channels
+  contentStrategy: string[]; // Key content types
+  partnerships: string[]; // Potential partnerships
+  pricingModel: string; // e.g., "Freemium + Premium tiers"
+  first100Users: string; // Strategy to get first 100
+  timeline: string; // e.g., "6 months to launch"
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 7: Tech Stack Summary
+export interface TechStageSummary {
+  stage: 'tech';
+  frontend: string[]; // Key technologies
+  backend: string[]; // Key technologies
+  aiServices: string[]; // AI/ML services
+  infrastructure: string[]; // Hosting, DB, etc.
+  estimatedCost: string; // Monthly infrastructure cost
+  buildTime: string; // e.g., "3-4 months"
+  teamSize: string; // e.g., "2 developers"
+  keyInsights: string[]; // 3-5 critical insights
+}
+
+// Stage 8: Customer Personas Summary
+export interface CustomersStageSummary {
+  stage: 'customers';
+  personas: Array<{
+    name: string;
+    segment: string;
+    painPoints: string[];
+    goals: string[];
+  }>;
+  objections: string[]; // Top 5 objections
+  valueProposition: string; // Core value prop for each persona
+  acquisitionCost: string; // Estimated CAC per persona
+  lifetime Value: string; // Estimated LTV per persona
+  keyInsights: string[]; // 3-5 critical insights
 }
 
 export interface AnalysisResults {

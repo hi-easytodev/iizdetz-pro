@@ -2,6 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { deepResearch } from './perplexity';
 import { query } from '@/lib/db';
+import { extractStageSummary, createCondensedContext } from './extraction';
+import type { StageSummary } from '@/types';
 
 // ============================================
 // PROMPT LOADER
@@ -50,6 +52,7 @@ export interface StageResult {
   citations: string[];
   relatedQuestions: string[];
   completedAt: Date;
+  summary?: StageSummary; // Structured extraction для context optimization
 }
 
 export interface PipelineCallbacks {
@@ -67,6 +70,7 @@ export async function runAnalysisPipeline(
   callbacks?: PipelineCallbacks
 ): Promise<Record<string, StageResult>> {
   const results: Record<string, StageResult> = {};
+  const summaries: StageSummary[] = []; // Collect structured summaries for context
 
   console.log(`[Pipeline] Starting analysis for idea #${context.ideaId}: "${context.title}"`);
 
@@ -90,13 +94,21 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  // Extract structured summary for next stages
+  const marketSummary = await extractStageSummary('market', stage1Response.analysis);
+
   results.market = {
     stage: 'market',
     analysis: stage1Response.analysis,
     citations: stage1Response.citations,
     relatedQuestions: stage1Response.relatedQuestions,
     completedAt: new Date(),
+    summary: marketSummary || undefined,
   };
+
+  if (marketSummary) {
+    summaries.push(marketSummary);
+  }
 
   await saveStageResult(context.ideaId, 'market', results.market);
   await callbacks?.onStageComplete?.('market', 1, results.market);
@@ -112,7 +124,7 @@ export async function runAnalysisPipeline(
   const stage2Prompt = fillPrompt(stage2Template, {
     IDEA_TITLE: context.title,
     TARGET_AUDIENCE: context.targetAudience || 'professionals in the US',
-    STAGE_1_MARKET_ANALYSIS: results.market.analysis,
+    PREVIOUS_CONTEXT: summaries.length > 0 ? createCondensedContext(summaries) : '',
   });
 
   const stage2Response = await deepResearch(stage2Prompt, {
