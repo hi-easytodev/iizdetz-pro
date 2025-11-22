@@ -52,13 +52,19 @@ export interface StageResult {
   completedAt: Date;
 }
 
+export interface PipelineCallbacks {
+  onProgress?: (stageName: string, stageNumber: number, totalStages: number) => Promise<void> | void;
+  onStageComplete?: (stageName: string, stageNumber: number, result: StageResult) => Promise<void> | void;
+}
+
 /**
  * Run comprehensive 8-stage analysis pipeline
  *
  * Each stage uses results from previous stages as context
  */
 export async function runAnalysisPipeline(
-  context: PipelineContext
+  context: PipelineContext,
+  callbacks?: PipelineCallbacks
 ): Promise<Record<string, StageResult>> {
   const results: Record<string, StageResult> = {};
 
@@ -68,6 +74,7 @@ export async function runAnalysisPipeline(
   // STAGE 1: MARKET ANALYSIS
   // ============================================
   console.log('[Stage 1/8] Analyzing market...');
+  await callbacks?.onProgress?.('market', 1, 8);
 
   const stage1Template = await loadPrompt('1-market');
   const stage1Prompt = fillPrompt(stage1Template, {
@@ -92,12 +99,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'market', results.market);
+  await callbacks?.onStageComplete?.('market', 1, results.market);
   console.log(`[Stage 1/8] ✅ Market analysis complete (${stage1Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 2: DEMAND ANALYSIS
   // ============================================
   console.log('[Stage 2/8] Analyzing demand and pain points...');
+  await callbacks?.onProgress?.('demand', 2, 8);
 
   const stage2Template = await loadPrompt('2-demand');
   const stage2Prompt = fillPrompt(stage2Template, {
@@ -120,12 +129,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'demand', results.demand);
+  await callbacks?.onStageComplete?.('demand', 2, results.demand);
   console.log(`[Stage 2/8] ✅ Demand analysis complete (${stage2Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 3: COMMUNITIES
   // ============================================
   console.log('[Stage 3/8] Mapping communities and influencers...');
+  await callbacks?.onProgress?.('communities', 3, 8);
 
   const stage3Template = await loadPrompt('3-communities');
   const stage3Prompt = fillPrompt(stage3Template, {
@@ -148,12 +159,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'communities', results.communities);
+  await callbacks?.onStageComplete?.('communities', 3, results.communities);
   console.log(`[Stage 3/8] ✅ Communities mapped (${stage3Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 4: COMPETITIVE ANALYSIS
   // ============================================
   console.log('[Stage 4/8] Analyzing competitors...');
+  await callbacks?.onProgress?.('competition', 4, 8);
 
   const stage4Template = await loadPrompt('4-competition');
   const stage4Prompt = fillPrompt(stage4Template, {
@@ -177,12 +190,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'competition', results.competition);
+  await callbacks?.onStageComplete?.('competition', 4, results.competition);
   console.log(`[Stage 4/8] ✅ Competitive analysis complete (${stage4Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 5: FORECAST
   // ============================================
   console.log('[Stage 5/8] Forecasting market evolution...');
+  await callbacks?.onProgress?.('forecast', 5, 8);
 
   const stage5Template = await loadPrompt('5-forecast');
   const stage5Prompt = fillPrompt(stage5Template, {
@@ -206,12 +221,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'forecast', results.forecast);
+  await callbacks?.onStageComplete?.('forecast', 5, results.forecast);
   console.log(`[Stage 5/8] ✅ Forecast complete (${stage5Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 6: GTM STRATEGY
   // ============================================
   console.log('[Stage 6/8] Developing GTM strategy...');
+  await callbacks?.onProgress?.('gtm', 6, 8);
 
   const stage6Template = await loadPrompt('6-gtm');
   const stage6Prompt = fillPrompt(stage6Template, {
@@ -236,12 +253,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'gtm', results.gtm);
+  await callbacks?.onStageComplete?.('gtm', 6, results.gtm);
   console.log(`[Stage 6/8] ✅ GTM strategy complete (${stage6Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 7: TECHNICAL FEASIBILITY
   // ============================================
   console.log('[Stage 7/8] Assessing technical feasibility...');
+  await callbacks?.onProgress?.('tech', 7, 8);
 
   const stage7Template = await loadPrompt('7-tech');
   const stage7Prompt = fillPrompt(stage7Template, {
@@ -266,12 +285,14 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'tech', results.tech);
+  await callbacks?.onStageComplete?.('tech', 7, results.tech);
   console.log(`[Stage 7/8] ✅ Tech feasibility assessed (${stage7Response.citations.length} sources)`);
 
   // ============================================
   // STAGE 8: CUSTOMER INSIGHTS
   // ============================================
   console.log('[Stage 8/8] Analyzing customer psychology...');
+  await callbacks?.onProgress?.('customers', 8, 8);
 
   const stage8Template = await loadPrompt('8-customers');
   const stage8Prompt = fillPrompt(stage8Template, {
@@ -296,6 +317,7 @@ export async function runAnalysisPipeline(
   };
 
   await saveStageResult(context.ideaId, 'customers', results.customers);
+  await callbacks?.onStageComplete?.('customers', 8, results.customers);
   console.log(`[Stage 8/8] ✅ Customer insights complete (${stage8Response.citations.length} sources)`);
 
   // ============================================

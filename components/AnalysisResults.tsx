@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { AnalysisStageCard } from './AnalysisStageCard';
-import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { AnalysisProgressIndicator } from './AnalysisProgressIndicator';
+import { Sparkles, AlertCircle } from 'lucide-react';
 import type { AnalysisResults as AnalysisResultsType } from '@/types';
 
 interface AnalysisResultsProps {
@@ -66,34 +67,76 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Progress state
+  const [currentStage, setCurrentStage] = useState<string | undefined>();
+  const [currentStageNumber, setCurrentStageNumber] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
+  const [progressMessage, setProgressMessage] = useState<string>('');
+  const [completedStages, setCompletedStages] = useState<string[]>([]);
+
+  const eventSourceRef = useRef<EventSource | null>(null);
+
   const handleStartAnalysis = async () => {
     setIsAnalyzing(true);
     setError(null);
+    setProgress(0);
+    setCurrentStage(undefined);
+    setCurrentStageNumber(0);
+    setProgressMessage('Initializing...');
+    setCompletedStages([]);
 
     try {
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ideaId }),
-      });
+      // Create EventSource for SSE
+      const eventSource = new EventSource(
+        `/api/analyze/stream?ideaId=${ideaId}`,
+        { withCredentials: false }
+      );
 
-      if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
-      }
+      eventSourceRef.current = eventSource;
 
-      const data = await response.json();
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-      if (data.success) {
-        setResults(data.stages);
-      } else {
-        throw new Error(data.error || 'Неизвестная ошибка');
-      }
+          switch (data.type) {
+            case 'progress':
+              setCurrentStage(data.stage);
+              setCurrentStageNumber(data.stageNumber || 0);
+              setProgress(data.progress || 0);
+              setProgressMessage(data.message || '');
+              break;
+
+            case 'stage_complete':
+              setCompletedStages((prev) => [...prev, data.stage]);
+              break;
+
+            case 'complete':
+              setResults(data.data.stages);
+              setProgress(100);
+              setIsAnalyzing(false);
+              eventSource.close();
+              break;
+
+            case 'error':
+              setError(data.error || 'Analysis failed');
+              setIsAnalyzing(false);
+              eventSource.close();
+              break;
+          }
+        } catch (err) {
+          console.error('Failed to parse SSE message:', err);
+        }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('EventSource error:', err);
+        setError('Connection lost. Please try again.');
+        setIsAnalyzing(false);
+        eventSource.close();
+      };
     } catch (err) {
       console.error('Analysis error:', err);
-      setError(err instanceof Error ? err.message : 'Не удалось запустить анализ');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to start analysis');
       setIsAnalyzing(false);
     }
   };
@@ -151,30 +194,25 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
   // Analysis in progress
   if (isAnalyzing) {
     return (
-      <div className="text-center py-16">
-        <Loader2 className="w-16 h-16 mx-auto text-[var(--accent-purple)] animate-spin mb-4" />
-        <h2 className="text-2xl font-bold text-white mb-3">
-          Анализ в процессе...
-        </h2>
-        <p className="text-[var(--text-secondary)] max-w-lg mx-auto">
-          Система последовательно выполняет 8 этапов анализа с использованием
-          Perplexity Deep Research. Это может занять до 5 минут.
-        </p>
-        <div className="mt-8 max-w-md mx-auto">
-          <div className="h-2 bg-[var(--border)] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[var(--accent-purple)] to-pink-600 animate-pulse" />
-          </div>
-        </div>
+      <div className="py-16">
+        <AnalysisProgressIndicator
+          currentStage={currentStage}
+          currentStageNumber={currentStageNumber}
+          totalStages={8}
+          progress={progress}
+          message={progressMessage}
+          completedStages={completedStages}
+        />
       </div>
     );
   }
 
   // Results available
-  const completedStages = STAGE_CONFIG.filter(
+  const availableStages = STAGE_CONFIG.filter(
     (stage) => results && results[stage.key as keyof AnalysisResultsType]
   );
 
-  const totalSources = completedStages.reduce((sum, stage) => {
+  const totalSources = availableStages.reduce((sum, stage) => {
     const stageResult = results![stage.key as keyof AnalysisResultsType];
     return sum + (stageResult?.citations?.length || 0);
   }, 0);
@@ -195,7 +233,7 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
           <div className="flex gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-[var(--accent-gold)]">
-                {completedStages.length}
+                {availableStages.length}
               </div>
               <div className="text-xs text-gray-400 uppercase tracking-wide">
                 Этапов
@@ -234,7 +272,7 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
       </div>
 
       {/* Retry button if needed */}
-      {completedStages.length === 0 && (
+      {availableStages.length === 0 && (
         <div className="text-center py-8">
           <p className="text-[var(--text-secondary)] mb-4">
             Не удалось загрузить результаты анализа
