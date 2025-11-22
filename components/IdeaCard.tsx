@@ -1,11 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Heart } from 'lucide-react';
+import { Heart, CheckSquare, Square } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { MiniChart } from './MiniChart';
 import { cn } from '@/lib/utils';
 import type { IdeaCardProps } from '@/types';
+
+interface ExtendedIdeaCardProps extends IdeaCardProps {
+  isSelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+  comparisonMode?: boolean;
+}
 
 export function IdeaCard({
   id,
@@ -16,10 +22,21 @@ export function IdeaCard({
   reactions,
   chartData,
   isFavorite,
-}: IdeaCardProps) {
+  isSelected = false,
+  onToggleSelect,
+  comparisonMode = false,
+}: ExtendedIdeaCardProps) {
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleSelect?.(id);
+  };
+
   return (
     <Link href={`/idea/${id}`} className="block group">
-      <Card className="relative hover:border-[var(--accent-purple)] transition-all duration-300 overflow-hidden">
+      <Card className={`relative hover:border-[var(--accent-purple)] transition-all duration-300 overflow-hidden ${
+        isSelected ? 'border-[var(--accent-gold)] ring-2 ring-[var(--accent-gold)]' : ''
+      }`}>
         <div className="p-6">
           {/* Mini Graph */}
           <MiniChart data={chartData} />
@@ -74,6 +91,20 @@ export function IdeaCard({
               </span>
             ))}
           </div>
+
+          {/* Comparison Checkbox */}
+          {comparisonMode && (
+            <button
+              className="absolute top-4 left-4 p-2 rounded-lg bg-[var(--card-bg)] hover:bg-[var(--border)] transition-colors z-10"
+              onClick={handleCheckboxClick}
+            >
+              {isSelected ? (
+                <CheckSquare className="w-5 h-5 text-[var(--accent-gold)]" />
+              ) : (
+                <Square className="w-5 h-5 text-gray-500 hover:text-[var(--accent-gold)]" />
+              )}
+            </button>
+          )}
 
           {/* Favorite Button */}
           <button

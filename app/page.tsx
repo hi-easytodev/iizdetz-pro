@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { IdeaCard } from '@/components/IdeaCard';
 import { Button } from '@/components/ui/button';
 import { NichePicker, type NicheId } from '@/components/NichePicker';
 import { CustomNicheResearch } from '@/components/CustomNicheResearch';
 import { SearchBar } from '@/components/SearchBar';
 import { CategoryFilter } from '@/components/CategoryFilter';
-import { ChevronDown, Star } from 'lucide-react';
+import { ChevronDown, Star, GitCompare, X } from 'lucide-react';
 import type { IdeaCardProps } from '@/types';
 
 // Моковые данные для демонстрации
@@ -145,11 +146,14 @@ const mockIdeas: (IdeaCardProps & { niche: NicheId })[] = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
   const [sortBy, setSortBy] = useState<'score' | 'created_at'>('score');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState<NicheId>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [selectedIdeaIds, setSelectedIdeaIds] = useState<number[]>([]);
 
   // Extract unique categories from all ideas
   const allCategories = useMemo(() => {
@@ -159,6 +163,30 @@ export default function HomePage() {
     });
     return Array.from(categorySet).sort();
   }, []);
+
+  // Comparison functions
+  const toggleComparisonMode = () => {
+    setComparisonMode(!comparisonMode);
+    if (comparisonMode) {
+      setSelectedIdeaIds([]);
+    }
+  };
+
+  const toggleIdeaSelection = (id: number) => {
+    setSelectedIdeaIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((ideaId) => ideaId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleCompare = () => {
+    if (selectedIdeaIds.length >= 2) {
+      router.push(`/compare?ids=${selectedIdeaIds.join(',')}`);
+    }
+  };
 
   const filteredIdeas = mockIdeas
     .filter((idea) => selectedNiche === 'all' || idea.niche === selectedNiche)
@@ -221,36 +249,74 @@ export default function HomePage() {
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        {/* Sort Dropdown */}
-        <div className="relative">
-          <button
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-white hover:border-[var(--accent-purple)] transition-colors"
-            onClick={() => {
-              setSortBy(sortBy === 'score' ? 'created_at' : 'score');
-            }}
+        <div className="flex items-center gap-4">
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--card-bg)] border border-[var(--border)] rounded-lg text-white hover:border-[var(--accent-purple)] transition-colors"
+              onClick={() => {
+                setSortBy(sortBy === 'score' ? 'created_at' : 'score');
+              }}
+            >
+              <span>
+                {sortBy === 'score' ? 'По рейтингу' : 'Новые первыми'}
+              </span>
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Favorites Toggle */}
+          <Button
+            variant={showFavoritesOnly ? 'default' : 'outline'}
+            onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+            className="flex items-center gap-2"
           >
-            <span>
-              {sortBy === 'score' ? 'По рейтингу' : 'Новые первыми'}
-            </span>
-            <ChevronDown className="w-4 h-4" />
-          </button>
+            <Star className={showFavoritesOnly ? 'fill-current' : ''} />
+            Избранное
+          </Button>
         </div>
 
-        {/* Favorites Toggle */}
-        <Button
-          variant={showFavoritesOnly ? 'default' : 'outline'}
-          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          className="flex items-center gap-2"
-        >
-          <Star className={showFavoritesOnly ? 'fill-current' : ''} />
-          Избранное
-        </Button>
+        {/* Comparison Controls */}
+        <div className="flex items-center gap-3">
+          {comparisonMode && selectedIdeaIds.length >= 2 && (
+            <Button
+              onClick={handleCompare}
+              className="flex items-center gap-2 bg-gradient-to-r from-[var(--accent-gold)] to-yellow-600 hover:from-yellow-600 hover:to-[var(--accent-gold)] text-black font-semibold"
+            >
+              <GitCompare className="w-4 h-4" />
+              Сравнить ({selectedIdeaIds.length})
+            </Button>
+          )}
+          <Button
+            variant={comparisonMode ? 'default' : 'outline'}
+            onClick={toggleComparisonMode}
+            className="flex items-center gap-2"
+          >
+            {comparisonMode ? (
+              <>
+                <X className="w-4 h-4" />
+                Отменить
+              </>
+            ) : (
+              <>
+                <GitCompare className="w-4 h-4" />
+                Сравнить идеи
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Ideas Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredIdeas.map((idea) => (
-          <IdeaCard key={idea.id} {...idea} />
+          <IdeaCard
+            key={idea.id}
+            {...idea}
+            comparisonMode={comparisonMode}
+            isSelected={selectedIdeaIds.includes(idea.id)}
+            onToggleSelect={toggleIdeaSelection}
+          />
         ))}
       </div>
 
