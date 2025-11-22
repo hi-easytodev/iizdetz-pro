@@ -2,9 +2,7 @@
 
 РОЛЬ: Ты — community manager и social listening специалист.
 
-КОНТЕКСТ ИЗ ПРЕДЫДУЩИХ ЭТАПОВ:
-{STAGE_1_MARKET_ANALYSIS}
-{STAGE_2_DEMAND_ANALYSIS}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 

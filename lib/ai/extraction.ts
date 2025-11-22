@@ -19,16 +19,20 @@ import type {
 } from '@/types';
 
 /**
- * Extract structured summary from stage analysis
+ * Extract structured summary from stage analysis with retry and fallback
  *
  * @param stage - Stage name ('market', 'demand', etc.)
  * @param fullAnalysis - Full analysis text (2000-4000 words)
- * @returns Structured summary with key facts only
+ * @param retryCount - Current retry attempt (internal use)
+ * @returns Structured summary with key facts only, or null if all attempts fail
  */
 export async function extractStageSummary(
   stage: string,
-  fullAnalysis: string
+  fullAnalysis: string,
+  retryCount = 0
 ): Promise<StageSummary | null> {
+  const MAX_RETRIES = 2;
+
   try {
     const extractionPrompt = getExtractionPrompt(stage, fullAnalysis);
 
@@ -40,14 +44,195 @@ export async function extractStageSummary(
     // Parse JSON response
     const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
     if (!jsonMatch) {
-      console.error(`[Extraction] Failed to extract JSON from ${stage} stage`);
-      return null;
+      console.warn(`[Extraction] No JSON block found in ${stage} response (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
+
+      // Retry if we haven't exceeded max retries
+      if (retryCount < MAX_RETRIES) {
+        console.log(`[Extraction] Retrying ${stage} extraction...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        return extractStageSummary(stage, fullAnalysis, retryCount + 1);
+      }
+
+      // Fallback to text-based summary
+      console.log(`[Extraction] Using fallback text summary for ${stage}`);
+      return createFallbackSummary(stage, fullAnalysis);
     }
 
     const summary = JSON.parse(jsonMatch[1]);
+    console.log(`[Extraction] ✅ Successfully extracted ${stage} summary`);
     return summary as StageSummary;
   } catch (error) {
-    console.error(`[Extraction] Error extracting ${stage} summary:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Extraction] Error extracting ${stage} summary (attempt ${retryCount + 1}/${MAX_RETRIES + 1}):`, errorMessage);
+
+    // Retry on error
+    if (retryCount < MAX_RETRIES) {
+      console.log(`[Extraction] Retrying ${stage} extraction after error...`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return extractStageSummary(stage, fullAnalysis, retryCount + 1);
+    }
+
+    // Final fallback
+    console.warn(`[Extraction] ⚠️  All extraction attempts failed for ${stage}, using fallback`);
+    return createFallbackSummary(stage, fullAnalysis);
+  }
+}
+
+/**
+ * Create a simple text-based fallback summary when JSON extraction fails
+ * Extracts first few sentences as keyInsights
+ */
+function createFallbackSummary(stage: string, fullAnalysis: string): StageSummary | null {
+  try {
+    // Extract first 500 words as a simple summary
+    const words = fullAnalysis.split(/\s+/).slice(0, 500);
+    const shortText = words.join(' ');
+
+    // Extract sentences for insights
+    const sentences = shortText.match(/[^.!?]+[.!?]+/g) || [];
+    const keyInsights = sentences.slice(0, 5).map(s => s.trim());
+
+    // Create minimal fallback based on stage
+    const baseSummary = {
+      stage,
+      keyInsights,
+    };
+
+    // Add stage-specific defaults
+    switch (stage) {
+      case 'market':
+        return {
+          ...baseSummary,
+          stage: 'market',
+          tam: 'See full analysis',
+          sam: 'See full analysis',
+          som: 'See full analysis',
+          growthRate: 'See full analysis',
+          keyTrends: keyInsights.slice(0, 3),
+          targetSegments: ['See full analysis'],
+          marketMaturity: 'growth',
+        } as MarketStageSummary;
+
+      case 'demand':
+        return {
+          ...baseSummary,
+          stage: 'demand',
+          searchVolume: 'See full analysis',
+          demandTrend: 'rising',
+          painPoints: keyInsights.slice(0, 5),
+          currentSolutions: ['See full analysis'],
+          willingnessToPay: 'medium',
+          urgency: 'medium',
+        } as DemandStageSummary;
+
+      case 'communities':
+        return {
+          ...baseSummary,
+          stage: 'communities',
+          mainCommunities: [
+            {
+              name: 'See full analysis',
+              platform: 'Various',
+              size: 'See full analysis',
+              engagement: 'medium',
+            },
+          ],
+          influencers: ['See full analysis'],
+          discussions: keyInsights.slice(0, 3),
+          sentiment: 'neutral',
+          acquisitionChannels: ['See full analysis'],
+        } as CommunitiesStageSummary;
+
+      case 'competition':
+        return {
+          ...baseSummary,
+          stage: 'competition',
+          directCompetitors: [
+            {
+              name: 'See full analysis',
+              pricing: 'See full analysis',
+              strengths: ['See full analysis'],
+              weaknesses: ['See full analysis'],
+            },
+          ],
+          indirectCompetitors: ['See full analysis'],
+          marketGaps: keyInsights.slice(0, 3),
+          competitiveAdvantage: ['See full analysis'],
+          threatLevel: 'medium',
+        } as CompetitionStageSummary;
+
+      case 'forecast':
+        return {
+          ...baseSummary,
+          stage: 'forecast',
+          arrProjections: {
+            year1: 'See full analysis',
+            year2: 'See full analysis',
+            year3: 'See full analysis',
+          },
+          userGrowth: {
+            year1: 'See full analysis',
+            year2: 'See full analysis',
+            year3: 'See full analysis',
+          },
+          keyMetrics: {
+            cac: 'See full analysis',
+            ltv: 'See full analysis',
+            ltvCacRatio: 'See full analysis',
+            churnRate: 'See full analysis',
+          },
+          breakeven: 'See full analysis',
+        } as ForecastStageSummary;
+
+      case 'gtm':
+        return {
+          ...baseSummary,
+          stage: 'gtm',
+          launchChannels: keyInsights.slice(0, 3),
+          contentStrategy: ['See full analysis'],
+          partnerships: ['See full analysis'],
+          pricingModel: 'See full analysis',
+          first100Users: 'See full analysis',
+          timeline: 'See full analysis',
+        } as GtmStageSummary;
+
+      case 'tech':
+        return {
+          ...baseSummary,
+          stage: 'tech',
+          frontend: ['See full analysis'],
+          backend: ['See full analysis'],
+          aiServices: ['See full analysis'],
+          infrastructure: ['See full analysis'],
+          estimatedCost: 'See full analysis',
+          buildTime: 'See full analysis',
+          teamSize: 'See full analysis',
+        } as TechStageSummary;
+
+      case 'customers':
+        return {
+          ...baseSummary,
+          stage: 'customers',
+          personas: [
+            {
+              name: 'See full analysis',
+              segment: 'See full analysis',
+              painPoints: keyInsights.slice(0, 3),
+              goals: ['See full analysis'],
+            },
+          ],
+          objections: keyInsights.slice(0, 5),
+          valueProposition: 'See full analysis',
+          acquisitionCost: 'See full analysis',
+          lifetimeValue: 'See full analysis',
+        } as CustomersStageSummary;
+
+      default:
+        console.warn(`[Extraction] No fallback template for stage: ${stage}`);
+        return null;
+    }
+  } catch (error) {
+    console.error(`[Extraction] Failed to create fallback summary for ${stage}:`, error);
     return null;
   }
 }

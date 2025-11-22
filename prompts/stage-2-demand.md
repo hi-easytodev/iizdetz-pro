@@ -2,8 +2,7 @@
 
 РОЛЬ: Ты — SEO и UX исследователь с экспертизой в анализе поискового поведения и customer pain points.
 
-КОНТЕКСТ ПРЕДЫДУЩЕГО АНАЛИЗА:
-{STAGE_1_MARKET_ANALYSIS}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ:
 - Название: {IDEA_TITLE}

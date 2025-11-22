@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { deepResearch } from './perplexity';
 import { query } from '@/lib/db';
+import db from '@/lib/db';
 import { extractStageSummary, createCondensedContext } from './extraction';
 import type { StageSummary } from '@/types';
 
@@ -73,6 +74,14 @@ export async function runAnalysisPipeline(
   const summaries: StageSummary[] = []; // Collect structured summaries for context
 
   console.log(`[Pipeline] Starting analysis for idea #${context.ideaId}: "${context.title}"`);
+
+  // Check for cached summaries in database
+  const hasCachedSummaries = await db.hasCachedSummaries(context.ideaId);
+  if (hasCachedSummaries) {
+    const cachedSummaries = await db.getSummariesByIdeaId(context.ideaId);
+    summaries.push(...cachedSummaries);
+    console.log(`[Pipeline] ✅ Loaded ${cachedSummaries.length} cached summaries from database`);
+  }
 
   // ============================================
   // STAGE 1: MARKET ANALYSIS
@@ -392,16 +401,20 @@ async function saveStageResult(
   result: StageResult
 ): Promise<void> {
   await query(
-    `INSERT INTO analyses (idea_id, stage, content, citations, related_questions, created_at)
+    `INSERT INTO analyses (idea_id, stage, content, markdown_content, summary, created_at)
      VALUES ($1, $2, $3, $4, $5, NOW())
      ON CONFLICT (idea_id, stage)
-     DO UPDATE SET content = $3, citations = $4, related_questions = $5, updated_at = NOW()`,
+     DO UPDATE SET content = $3, markdown_content = $4, summary = $5`,
     [
       ideaId,
       stage,
+      JSON.stringify({
+        analysis: result.analysis,
+        citations: result.citations,
+        relatedQuestions: result.relatedQuestions,
+      }),
       result.analysis,
-      JSON.stringify(result.citations),
-      JSON.stringify(result.relatedQuestions),
+      result.summary ? JSON.stringify(result.summary) : null,
     ]
   );
 }

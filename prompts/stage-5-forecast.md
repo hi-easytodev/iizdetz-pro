@@ -2,8 +2,7 @@
 
 РОЛЬ: Ты — футуролог и стратегический планировщик с опытом в technology foresight.
 
-КОНТЕКСТ:
-{STAGES_1_TO_4}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 

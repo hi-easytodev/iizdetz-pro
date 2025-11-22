@@ -2,8 +2,7 @@
 
 РОЛЬ: Ты — customer psychologist и UX researcher с опытом в Jobs-To-Be-Done методологии.
 
-КОНТЕКСТ:
-{STAGES_1_TO_7}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 ЦЕЛЕВАЯ АУДИТОРИЯ: {TARGET_AUDIENCE}

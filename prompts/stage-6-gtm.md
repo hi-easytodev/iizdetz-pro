@@ -2,8 +2,7 @@
 
 РОЛЬ: Ты — CMO и growth стратег с track record запуска 10+ успешных SaaS продуктов.
 
-КОНТЕКСТ:
-{STAGES_1_TO_5}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 ЦЕЛЕВАЯ АУДИТОРИЯ: {TARGET_AUDIENCE}

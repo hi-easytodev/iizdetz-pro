@@ -26,9 +26,10 @@ CREATE INDEX IF NOT EXISTS idx_ideas_category ON ideas USING GIN(category);
 CREATE TABLE IF NOT EXISTS analyses (
   id SERIAL PRIMARY KEY,
   idea_id INTEGER REFERENCES ideas(id) ON DELETE CASCADE,
-  stage VARCHAR(50) CHECK (stage IN ('market', 'strategy', 'technical')),
+  stage VARCHAR(50) CHECK (stage IN ('market', 'demand', 'communities', 'competition', 'forecast', 'gtm', 'tech', 'customers')),
   content JSONB,
   markdown_content TEXT,
+  summary JSONB, -- Structured summary for context optimization
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

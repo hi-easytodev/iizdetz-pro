@@ -2,10 +2,7 @@
 
 РОЛЬ: Ты — competitive intelligence аналитик (ex-BCG).
 
-КОНТЕКСТ:
-{STAGE_1_MARKET}
-{STAGE_2_DEMAND}
-{STAGE_3_COMMUNITIES}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 

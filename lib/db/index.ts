@@ -109,15 +109,22 @@ export const db = {
 
   async createAnalysis(analysis: {
     idea_id: number;
-    stage: 'market' | 'strategy' | 'technical';
+    stage: 'market' | 'demand' | 'communities' | 'competition' | 'forecast' | 'gtm' | 'tech' | 'customers';
     content: any;
     markdown_content: string;
+    summary?: any;
   }) {
     const result = await query(
-      `INSERT INTO analyses (idea_id, stage, content, markdown_content)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO analyses (idea_id, stage, content, markdown_content, summary)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [analysis.idea_id, analysis.stage, JSON.stringify(analysis.content), analysis.markdown_content]
+      [
+        analysis.idea_id,
+        analysis.stage,
+        JSON.stringify(analysis.content),
+        analysis.markdown_content,
+        analysis.summary ? JSON.stringify(analysis.summary) : null,
+      ]
     );
     return result.rows[0];
   },
@@ -130,12 +137,44 @@ export const db = {
     return result.rows;
   },
 
-  async getAnalysisByStage(ideaId: number, stage: 'market' | 'strategy' | 'technical') {
+  async getAnalysisByStage(
+    ideaId: number,
+    stage: 'market' | 'demand' | 'communities' | 'competition' | 'forecast' | 'gtm' | 'tech' | 'customers'
+  ) {
     const result = await query(
       `SELECT * FROM analyses WHERE idea_id = $1 AND stage = $2 ORDER BY created_at DESC LIMIT 1`,
       [ideaId, stage]
     );
     return result.rows[0] || null;
+  },
+
+  async getSummariesByIdeaId(ideaId: number) {
+    const result = await query(
+      `SELECT stage, summary FROM analyses
+       WHERE idea_id = $1 AND summary IS NOT NULL
+       ORDER BY
+         CASE stage
+           WHEN 'market' THEN 1
+           WHEN 'demand' THEN 2
+           WHEN 'communities' THEN 3
+           WHEN 'competition' THEN 4
+           WHEN 'forecast' THEN 5
+           WHEN 'gtm' THEN 6
+           WHEN 'tech' THEN 7
+           WHEN 'customers' THEN 8
+         END`,
+      [ideaId]
+    );
+    return result.rows.map((row: any) => row.summary);
+  },
+
+  async hasCachedSummaries(ideaId: number): Promise<boolean> {
+    const result = await query(
+      `SELECT COUNT(*) as count FROM analyses
+       WHERE idea_id = $1 AND summary IS NOT NULL`,
+      [ideaId]
+    );
+    return parseInt(result.rows[0]?.count || '0') > 0;
   },
 
   // ============================================

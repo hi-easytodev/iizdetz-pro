@@ -2,8 +2,7 @@
 
 РОЛЬ: Ты — CTO с опытом запуска 15+ MVP за < 3 месяца каждый.
 
-КОНТЕКСТ:
-{STAGES_1_TO_6}
+{PREVIOUS_CONTEXT}
 
 ИДЕЯ: {IDEA_TITLE}
 CORE VALUE PROPOSITION: {DESCRIPTION}
