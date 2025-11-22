@@ -12,10 +12,11 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { ideaId: string } }
+  { params }: { params: Promise<{ ideaId: string }> }
 ) {
   try {
-    const ideaId = parseInt(params.ideaId);
+    const { ideaId: ideaIdStr } = await params;
+    const ideaId = parseInt(ideaIdStr);
 
     if (isNaN(ideaId)) {
       return NextResponse.json({ error: 'Invalid idea ID' }, { status: 400 });
@@ -61,15 +62,15 @@ export async function GET(
         createdAt: idea.created_at,
       },
       results,
-    });
+    }) as any;
 
     // Render to stream
     const stream = await renderToStream(pdfDocument);
 
     // Convert stream to buffer
-    const chunks: Uint8Array[] = [];
+    const chunks: Buffer[] = [];
     for await (const chunk of stream) {
-      chunks.push(chunk);
+      chunks.push(Buffer.from(chunk));
     }
     const buffer = Buffer.concat(chunks);
 

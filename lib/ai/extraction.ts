@@ -5,7 +5,7 @@
  * to optimize context window usage in pipeline stages
  */
 
-import { callClaude } from './claude';
+import { chat } from './claude';
 import type {
   StageSummary,
   MarketStageSummary,
@@ -36,13 +36,16 @@ export async function extractStageSummary(
   try {
     const extractionPrompt = getExtractionPrompt(stage, fullAnalysis);
 
-    const response = await callClaude(extractionPrompt, {
-      maxTokens: 1000, // Summaries should be concise
-      temperature: 0.1, // Low temperature for factual extraction
-    });
+    const response = await chat(
+      [{ role: 'user', content: extractionPrompt }],
+      {
+        maxTokens: 1000, // Summaries should be concise
+        temperature: 0.1, // Low temperature for factual extraction
+      }
+    );
 
     // Parse JSON response
-    const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/);
+    const jsonMatch = response.content.match(/```json\n([\s\S]*?)\n```/);
     if (!jsonMatch) {
       console.warn(`[Extraction] No JSON block found in ${stage} response (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
 

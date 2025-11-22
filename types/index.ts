@@ -168,7 +168,7 @@ export interface CustomersStageSummary {
   objections: string[]; // Top 5 objections
   valueProposition: string; // Core value prop for each persona
   acquisitionCost: string; // Estimated CAC per persona
-  lifetime Value: string; // Estimated LTV per persona
+  lifetimeValue: string; // Estimated LTV per persona
   keyInsights: string[]; // 3-5 critical insights
 }
 

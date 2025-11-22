@@ -1,7 +1,14 @@
 import { Resend } from 'resend';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend client lazily to avoid build-time errors
+let resend: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY || 'dummy-key-for-build');
+  }
+  return resend;
+}
 
 export interface NewIdeasEmailData {
   to: string;
@@ -23,7 +30,7 @@ export async function sendNewIdeasEmail(data: NewIdeasEmailData) {
   try {
     const { to, userName, ideas, totalIdeas } = data;
 
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'AI Idea Analyzer <noreply@yourdomain.com>',
       to,
       subject: `🚀 ${totalIdeas} New Business Ideas Added Today!`,
@@ -149,7 +156,7 @@ export async function sendAnalysisCompleteEmail(data: {
   try {
     const { to, userName, ideaTitle, ideaId } = data;
 
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: process.env.EMAIL_FROM || 'AI Idea Analyzer <noreply@yourdomain.com>',
       to,
       subject: `✅ Your Analysis is Complete: ${ideaTitle}`,

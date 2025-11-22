@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 interface IdeaPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function IdeaDetailPage({ params }: IdeaPageProps) {
-  const ideaId = parseInt(params.id, 10);
+  const { id } = await params;
+  const ideaId = parseInt(id, 10);
 
   if (isNaN(ideaId)) {
     notFound();

@@ -18,7 +18,7 @@ export const authConfig: NextAuthConfig = {
     signIn: '/auth/signin',
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: any) {
       // Save user to database on first sign in
       if (user.email) {
         try {
@@ -34,14 +34,14 @@ export const authConfig: NextAuthConfig = {
       }
       return true;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       // Add user ID to session
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
       }

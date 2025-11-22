@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { ComparisonView } from '@/components/ComparisonView';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -142,7 +142,7 @@ const mockIdeas: (IdeaCardProps & { niche: NicheId })[] = [
   },
 ];
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedIdeas, setSelectedIdeas] = useState<IdeaCardProps[]>([]);
@@ -189,5 +189,13 @@ export default function ComparePage() {
       {/* Comparison View */}
       <ComparisonView ideas={selectedIdeas} onRemoveIdea={handleRemoveIdea} />
     </div>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Загрузка...</div>}>
+      <ComparePageContent />
+    </Suspense>
   );
 }

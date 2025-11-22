@@ -3,6 +3,7 @@
 import { CheckCircle2, Circle, Loader2 } from 'lucide-react';
 
 interface ProgressStage {
+  key: string;
   name: string;
   title: string;
   icon: string;
