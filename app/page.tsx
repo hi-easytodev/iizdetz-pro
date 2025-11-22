@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { IdeaCard } from '@/components/IdeaCard';
 import { Button } from '@/components/ui/button';
 import { NichePicker, type NicheId } from '@/components/NichePicker';
 import { CustomNicheResearch } from '@/components/CustomNicheResearch';
+import { SearchBar } from '@/components/SearchBar';
+import { CategoryFilter } from '@/components/CategoryFilter';
 import { ChevronDown, Star } from 'lucide-react';
 import type { IdeaCardProps } from '@/types';
 
@@ -146,10 +148,35 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState<'score' | 'created_at'>('score');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState<NicheId>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Extract unique categories from all ideas
+  const allCategories = useMemo(() => {
+    const categorySet = new Set<string>();
+    mockIdeas.forEach((idea) => {
+      idea.categories.forEach((category) => categorySet.add(category));
+    });
+    return Array.from(categorySet).sort();
+  }, []);
 
   const filteredIdeas = mockIdeas
     .filter((idea) => selectedNiche === 'all' || idea.niche === selectedNiche)
-    .filter((idea) => !showFavoritesOnly || idea.isFavorite);
+    .filter((idea) => !showFavoritesOnly || idea.isFavorite)
+    .filter((idea) => {
+      // Search filter
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        idea.title.toLowerCase().includes(query) ||
+        idea.description.toLowerCase().includes(query)
+      );
+    })
+    .filter((idea) => {
+      // Category filter
+      if (selectedCategories.length === 0) return true;
+      return idea.categories.some((cat) => selectedCategories.includes(cat));
+    });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -175,6 +202,20 @@ export default function HomePage() {
             console.log('Research completed for:', niche, results);
             // TODO: Save results to database or state
           }}
+        />
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <SearchBar value={searchQuery} onChange={setSearchQuery} />
+      </div>
+
+      {/* Category Filter */}
+      <div className="mb-8">
+        <CategoryFilter
+          categories={allCategories}
+          selectedCategories={selectedCategories}
+          onChange={setSelectedCategories}
         />
       </div>
 
@@ -218,10 +259,14 @@ export default function HomePage() {
         <div className="text-center py-20">
           <Star className="w-16 h-16 mx-auto mb-4 text-[var(--text-secondary)]" />
           <h3 className="text-xl font-semibold text-white mb-2">
-            Нет избранных идей
+            {showFavoritesOnly
+              ? 'Нет избранных идей'
+              : 'Ничего не найдено'}
           </h3>
           <p className="text-[var(--text-secondary)]">
-            Добавьте идеи в избранное, чтобы быстро находить их
+            {showFavoritesOnly
+              ? 'Добавьте идеи в избранное, чтобы быстро находить их'
+              : 'Попробуйте изменить параметры поиска или фильтры'}
           </p>
         </div>
       )}
