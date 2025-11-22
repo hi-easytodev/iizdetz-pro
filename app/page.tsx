@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { IdeaCard } from '@/components/IdeaCard';
 import { Button } from '@/components/ui/button';
 import { NichePicker, type NicheId } from '@/components/NichePicker';
+import { CustomNicheResearch } from '@/components/CustomNicheResearch';
 import { ChevronDown, Star } from 'lucide-react';
 import type { IdeaCardProps } from '@/types';
 
@@ -163,8 +164,18 @@ export default function HomePage() {
       </div>
 
       {/* Niche Picker */}
-      <div className="mb-8">
+      <div className="mb-6">
         <NichePicker selectedNiche={selectedNiche} onNicheChange={setSelectedNiche} />
+      </div>
+
+      {/* Custom Niche Research */}
+      <div className="mb-8">
+        <CustomNicheResearch
+          onResearchComplete={(niche, results) => {
+            console.log('Research completed for:', niche, results);
+            // TODO: Save results to database or state
+          }}
+        />
       </div>
 
       {/* Filters */}
