@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { AnalysisStageCard } from './AnalysisStageCard';
 import { AnalysisProgressIndicator } from './AnalysisProgressIndicator';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, Download, FileText } from 'lucide-react';
 import type { AnalysisResults as AnalysisResultsType } from '@/types';
 
 interface AnalysisResultsProps {
@@ -75,6 +75,10 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
   const [completedStages, setCompletedStages] = useState<string[]>([]);
 
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  const handleExportMarkdown = () => {
+    window.open(`/api/export/markdown?ideaId=${ideaId}`, '_blank');
+  };
 
   const handleStartAnalysis = async () => {
     setIsAnalyzing(true);
@@ -230,21 +234,35 @@ export function AnalysisResults({ ideaId, initialResults }: AnalysisResultsProps
               Комплексное исследование бизнес-идеи в 8 этапах
             </p>
           </div>
-          <div className="flex gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[var(--accent-gold)]">
-                {availableStages.length}
+          <div className="flex gap-4 items-center">
+            {/* Export Button */}
+            <button
+              onClick={handleExportMarkdown}
+              className="inline-flex items-center gap-2 bg-[var(--border)] hover:bg-gray-700 text-white font-medium px-4 py-2 rounded-lg transition-colors"
+              title="Export as Markdown"
+            >
+              <Download className="w-4 h-4" />
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Export MD</span>
+            </button>
+
+            {/* Stats */}
+            <div className="flex gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-[var(--accent-gold)]">
+                  {availableStages.length}
+                </div>
+                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                  Этапов
+                </div>
               </div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide">
-                Этапов
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[var(--accent-purple)]">
-                {totalSources}
-              </div>
-              <div className="text-xs text-gray-400 uppercase tracking-wide">
-                Источников
+              <div className="text-center">
+                <div className="text-3xl font-bold text-[var(--accent-purple)]">
+                  {totalSources}
+                </div>
+                <div className="text-xs text-gray-400 uppercase tracking-wide">
+                  Источников
+                </div>
               </div>
             </div>
           </div>

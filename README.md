@@ -355,7 +355,7 @@ npm run lint     # Линтинг
 
 ## 🎯 Статус проекта
 
-### ✅ Завершено (Этапы 1-3)
+### ✅ Завершено (Этапы 1-4)
 - [x] Базовая структура проекта
 - [x] UI компоненты и дизайн
 - [x] Главная страница с сеткой идей
@@ -366,15 +366,17 @@ npm run lint     # Линтинг
 - [x] **Multi-Provider Fallback System** с автоматическим переключением
 - [x] **8-Stage Analysis Pipeline** (`lib/ai/pipeline.ts`)
 - [x] **Prompt Template System** (8 шаблонов в `prompts/`)
-- [x] **Analysis API Endpoints** (`/api/analyze`)
+- [x] **Analysis API Endpoints** (`/api/analyze`, `/api/analyze/stream`)
 - [x] **Custom Niche Research** компонент
+- [x] **Детальная страница идеи** с полным UI для 8 этапов анализа
+- [x] **Real-time Progress Indicator** с Server-Sent Events (SSE)
 
-### 🚧 В разработке (Этап 4)
-- [ ] Детальная страница с полным анализом (UI для отображения 8 этапов)
-- [ ] Real-time progress indicator для pipeline
+### 🚧 В разработке (Этап 5)
+- [ ] Export результатов анализа (Markdown, PDF)
 - [ ] Vercel Cron Jobs для автоматического сбора идей
-- [ ] Export результатов анализа (PDF, Markdown)
 - [ ] Сравнение нескольких идей side-by-side
+- [ ] Фильтрация и поиск по идеям
+- [ ] User authentication и saved analyses
 
 ---
 
