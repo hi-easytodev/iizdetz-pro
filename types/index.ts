@@ -24,6 +24,38 @@ export interface Analysis {
   created_at: Date;
 }
 
+// ============================================
+// ТИПЫ ДЛЯ 8-ЭТАПНОГО АНАЛИЗА
+// ============================================
+
+export interface StageResult {
+  stage: string;
+  analysis: string;
+  citations: string[];
+  relatedQuestions: string[];
+  completedAt: Date;
+}
+
+export interface AnalysisResults {
+  market?: StageResult;
+  demand?: StageResult;
+  communities?: StageResult;
+  competition?: StageResult;
+  forecast?: StageResult;
+  gtm?: StageResult;
+  tech?: StageResult;
+  customers?: StageResult;
+}
+
+export interface AnalysisResponse {
+  success: boolean;
+  ideaId: number;
+  stages: AnalysisResults;
+  totalSources: number;
+  completedAt?: string;
+  stageCount?: number;
+}
+
 export interface PipelineRun {
   id: number;
   idea_id: number;
