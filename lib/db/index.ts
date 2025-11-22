@@ -41,6 +41,47 @@ export async function query<T extends QueryResultRow = any>(
 
 export const db = {
   // ============================================
+  // USERS
+  // ============================================
+
+  async upsertUser(user: {
+    email: string;
+    name: string;
+    image: string;
+    provider: string;
+  }) {
+    const result = await query<{ id: number }>(
+      `INSERT INTO users (email, name, image, provider)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (email)
+       DO UPDATE SET
+         name = EXCLUDED.name,
+         image = EXCLUDED.image,
+         provider = EXCLUDED.provider,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING id`,
+      [user.email, user.name, user.image, user.provider]
+    );
+    return result.rows[0];
+  },
+
+  async getUserByEmail(email: string) {
+    const result = await query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    return result.rows[0] || null;
+  },
+
+  async getUserById(id: number) {
+    const result = await query(
+      'SELECT * FROM users WHERE id = $1',
+      [id]
+    );
+    return result.rows[0] || null;
+  },
+
+  // ============================================
   // IDEAS
   // ============================================
 

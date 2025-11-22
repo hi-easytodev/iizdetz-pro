@@ -2,6 +2,20 @@
 -- СХЕМА БАЗЫ ДАННЫХ ДЛЯ ПРОЕКТА AI IDEA ANALYZER
 -- ============================================
 
+-- Таблица пользователей
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255),
+  image TEXT,
+  provider VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Индексы для users
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
 -- Таблица идей
 CREATE TABLE IF NOT EXISTS ideas (
   id SERIAL PRIMARY KEY,
