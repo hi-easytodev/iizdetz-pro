@@ -29,19 +29,98 @@ export interface ScrapedIdea {
 async function scrapeReddit(): Promise<ScrapedIdea[]> {
   const ideas: ScrapedIdea[] = [];
 
-  // Subreddits to monitor
+  // Subreddits to monitor for business ideas
   const subreddits = [
-    'SaaS',
-    'EntrepreneurRideAlong',
-    'Entrepreneur',
-    'startups',
-    'SideProject',
-    'IMadeThis',
+    { name: 'SaaS', category: 'SaaS' },
+    { name: 'EntrepreneurRideAlong', category: 'Entrepreneurship' },
+    { name: 'Entrepreneur', category: 'Business' },
+    { name: 'startups', category: 'Startups' },
+    { name: 'SideProject', category: 'Side Projects' },
+    { name: 'IMadeThis', category: 'Tech' },
+    { name: 'roastmystartup', category: 'Startups' },
+    { name: 'Startup_Ideas', category: 'Ideas' },
   ];
 
-  // TODO: Implement Reddit API integration
-  // For now, return mock data for demonstration
-  console.log('[Scraper] Reddit scraping not yet implemented');
+  try {
+    // Fetch from each subreddit in parallel
+    const results = await Promise.allSettled(
+      subreddits.map(async (sub) => {
+        try {
+          // Use Reddit's JSON API (no auth required for public posts)
+          const url = `https://www.reddit.com/r/${sub.name}/hot.json?limit=10`;
+
+          const response = await fetch(url, {
+            headers: {
+              'User-Agent': 'AI-Idea-Analyzer/1.0',
+            },
+          });
+
+          if (!response.ok) {
+            console.warn(`[Scraper] Reddit API error for r/${sub.name}: ${response.status}`);
+            return [];
+          }
+
+          const data = await response.json();
+          const subIdeas: ScrapedIdea[] = [];
+
+          for (const post of data.data.children) {
+            const postData = post.data;
+
+            // Filter for relevant posts (exclude stickied, removed, etc.)
+            if (
+              postData.stickied ||
+              postData.removed ||
+              postData.over_18 ||
+              postData.score < 5 // Minimum score threshold
+            ) {
+              continue;
+            }
+
+            // Extract title and description
+            const title = postData.title;
+            const description =
+              postData.selftext ||
+              postData.url ||
+              title.slice(0, 200);
+
+            // Skip if description is too short
+            if (description.length < 20) continue;
+
+            subIdeas.push({
+              title,
+              description,
+              sourceUrl: `https://www.reddit.com${postData.permalink}`,
+              source: 'reddit',
+              categories: [sub.category, `r/${sub.name}`],
+              metadata: {
+                upvotes: postData.ups,
+                comments: postData.num_comments,
+                author: postData.author,
+                createdAt: new Date(postData.created_utc * 1000),
+              },
+            });
+          }
+
+          console.log(`[Scraper] Found ${subIdeas.length} ideas from r/${sub.name}`);
+          return subIdeas;
+        } catch (error) {
+          console.error(`[Scraper] Error scraping r/${sub.name}:`, error);
+          return [];
+        }
+      })
+    );
+
+    // Combine all results
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        ideas.push(...result.value);
+      }
+    }
+
+    console.log(`[Scraper] Total Reddit ideas collected: ${ideas.length}`);
+  } catch (error) {
+    console.error('[Scraper] Error in Reddit scraping:', error);
+  }
 
   return ideas;
 }
@@ -52,8 +131,84 @@ async function scrapeReddit(): Promise<ScrapedIdea[]> {
 async function scrapeProductHunt(): Promise<ScrapedIdea[]> {
   const ideas: ScrapedIdea[] = [];
 
-  // TODO: Implement Product Hunt API integration
-  console.log('[Scraper] Product Hunt scraping not yet implemented');
+  try {
+    // Product Hunt doesn't have a public JSON API, but we can use their RSS feed
+    // or scrape the public-facing pages. For now, using a simple approach.
+
+    // Alternative: Use unofficial Product Hunt API endpoint
+    const response = await fetch('https://www.producthunt.com/frontend/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'AI-Idea-Analyzer/1.0',
+      },
+      body: JSON.stringify({
+        query: `
+          query {
+            posts(first: 20, order: VOTES) {
+              edges {
+                node {
+                  id
+                  name
+                  tagline
+                  description
+                  url
+                  votesCount
+                  commentsCount
+                  createdAt
+                  user {
+                    name
+                  }
+                  topics {
+                    edges {
+                      node {
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn('[Scraper] Product Hunt API returned:', response.status);
+      // Fallback: Try alternative approach or skip
+      return ideas;
+    }
+
+    const data = await response.json();
+
+    if (data.data?.posts?.edges) {
+      for (const edge of data.data.posts.edges) {
+        const post = edge.node;
+
+        const categories = post.topics?.edges?.map((t: any) => t.node.name) || ['Product Hunt'];
+
+        ideas.push({
+          title: post.name,
+          description: post.tagline || post.description || post.name,
+          sourceUrl: post.url || `https://www.producthunt.com/posts/${post.id}`,
+          source: 'producthunt',
+          categories: categories.slice(0, 3), // Top 3 categories
+          metadata: {
+            upvotes: post.votesCount,
+            comments: post.commentsCount,
+            author: post.user?.name,
+            createdAt: new Date(post.createdAt),
+          },
+        });
+      }
+
+      console.log(`[Scraper] Found ${ideas.length} ideas from Product Hunt`);
+    }
+  } catch (error) {
+    console.error('[Scraper] Error scraping Product Hunt:', error);
+    // Product Hunt API might be rate-limited or changed, so we continue gracefully
+  }
 
   return ideas;
 }
