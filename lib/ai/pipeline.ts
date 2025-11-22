@@ -132,13 +132,21 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  // Extract structured summary for next stages
+  const demandSummary = await extractStageSummary('demand', stage2Response.analysis);
+
   results.demand = {
     stage: 'demand',
     analysis: stage2Response.analysis,
     citations: stage2Response.citations,
     relatedQuestions: stage2Response.relatedQuestions,
     completedAt: new Date(),
+    summary: demandSummary || undefined,
   };
+
+  if (demandSummary) {
+    summaries.push(demandSummary);
+  }
 
   await saveStageResult(context.ideaId, 'demand', results.demand);
   await callbacks?.onStageComplete?.('demand', 2, results.demand);
@@ -153,8 +161,7 @@ export async function runAnalysisPipeline(
   const stage3Template = await loadPrompt('3-communities');
   const stage3Prompt = fillPrompt(stage3Template, {
     IDEA_TITLE: context.title,
-    STAGE_1_MARKET_ANALYSIS: results.market.analysis,
-    STAGE_2_DEMAND_ANALYSIS: results.demand.analysis,
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage3Response = await deepResearch(stage3Prompt, {
@@ -162,13 +169,20 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  const communitiesSummary = await extractStageSummary('communities', stage3Response.analysis);
+
   results.communities = {
     stage: 'communities',
     analysis: stage3Response.analysis,
     citations: stage3Response.citations,
     relatedQuestions: stage3Response.relatedQuestions,
     completedAt: new Date(),
+    summary: communitiesSummary || undefined,
   };
+
+  if (communitiesSummary) {
+    summaries.push(communitiesSummary);
+  }
 
   await saveStageResult(context.ideaId, 'communities', results.communities);
   await callbacks?.onStageComplete?.('communities', 3, results.communities);
@@ -183,9 +197,7 @@ export async function runAnalysisPipeline(
   const stage4Template = await loadPrompt('4-competition');
   const stage4Prompt = fillPrompt(stage4Template, {
     IDEA_TITLE: context.title,
-    STAGE_1_MARKET: results.market.analysis,
-    STAGE_2_DEMAND: results.demand.analysis,
-    STAGE_3_COMMUNITIES: results.communities.analysis,
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage4Response = await deepResearch(stage4Prompt, {
@@ -193,13 +205,20 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  const competitionSummary = await extractStageSummary('competition', stage4Response.analysis);
+
   results.competition = {
     stage: 'competition',
     analysis: stage4Response.analysis,
     citations: stage4Response.citations,
     relatedQuestions: stage4Response.relatedQuestions,
     completedAt: new Date(),
+    summary: competitionSummary || undefined,
   };
+
+  if (competitionSummary) {
+    summaries.push(competitionSummary);
+  }
 
   await saveStageResult(context.ideaId, 'competition', results.competition);
   await callbacks?.onStageComplete?.('competition', 4, results.competition);
@@ -214,9 +233,7 @@ export async function runAnalysisPipeline(
   const stage5Template = await loadPrompt('5-forecast');
   const stage5Prompt = fillPrompt(stage5Template, {
     IDEA_TITLE: context.title,
-    STAGES_1_TO_4: Object.values(results)
-      .map((r) => `## ${r.stage.toUpperCase()}\n${r.analysis}`)
-      .join('\n\n'),
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage5Response = await deepResearch(stage5Prompt, {
@@ -224,13 +241,20 @@ export async function runAnalysisPipeline(
     searchRecency: 'week',
   });
 
+  const forecastSummary = await extractStageSummary('forecast', stage5Response.analysis);
+
   results.forecast = {
     stage: 'forecast',
     analysis: stage5Response.analysis,
     citations: stage5Response.citations,
     relatedQuestions: stage5Response.relatedQuestions,
     completedAt: new Date(),
+    summary: forecastSummary || undefined,
   };
+
+  if (forecastSummary) {
+    summaries.push(forecastSummary);
+  }
 
   await saveStageResult(context.ideaId, 'forecast', results.forecast);
   await callbacks?.onStageComplete?.('forecast', 5, results.forecast);
@@ -246,9 +270,7 @@ export async function runAnalysisPipeline(
   const stage6Prompt = fillPrompt(stage6Template, {
     IDEA_TITLE: context.title,
     TARGET_AUDIENCE: context.targetAudience || 'US professionals',
-    STAGES_1_TO_5: Object.values(results)
-      .map((r) => `## ${r.stage.toUpperCase()}\n${r.analysis}`)
-      .join('\n\n'),
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage6Response = await deepResearch(stage6Prompt, {
@@ -256,13 +278,20 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  const gtmSummary = await extractStageSummary('gtm', stage6Response.analysis);
+
   results.gtm = {
     stage: 'gtm',
     analysis: stage6Response.analysis,
     citations: stage6Response.citations,
     relatedQuestions: stage6Response.relatedQuestions,
     completedAt: new Date(),
+    summary: gtmSummary || undefined,
   };
+
+  if (gtmSummary) {
+    summaries.push(gtmSummary);
+  }
 
   await saveStageResult(context.ideaId, 'gtm', results.gtm);
   await callbacks?.onStageComplete?.('gtm', 6, results.gtm);
@@ -278,9 +307,7 @@ export async function runAnalysisPipeline(
   const stage7Prompt = fillPrompt(stage7Template, {
     IDEA_TITLE: context.title,
     DESCRIPTION: context.description,
-    STAGES_1_TO_6: Object.values(results)
-      .map((r) => `## ${r.stage.toUpperCase()}\n${r.analysis}`)
-      .join('\n\n'),
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage7Response = await deepResearch(stage7Prompt, {
@@ -288,13 +315,20 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  const techSummary = await extractStageSummary('tech', stage7Response.analysis);
+
   results.tech = {
     stage: 'tech',
     analysis: stage7Response.analysis,
     citations: stage7Response.citations,
     relatedQuestions: stage7Response.relatedQuestions,
     completedAt: new Date(),
+    summary: techSummary || undefined,
   };
+
+  if (techSummary) {
+    summaries.push(techSummary);
+  }
 
   await saveStageResult(context.ideaId, 'tech', results.tech);
   await callbacks?.onStageComplete?.('tech', 7, results.tech);
@@ -310,9 +344,7 @@ export async function runAnalysisPipeline(
   const stage8Prompt = fillPrompt(stage8Template, {
     IDEA_TITLE: context.title,
     TARGET_AUDIENCE: context.targetAudience || 'US professionals',
-    STAGES_1_TO_7: Object.values(results)
-      .map((r) => `## ${r.stage.toUpperCase()}\n${r.analysis}`)
-      .join('\n\n'),
+    PREVIOUS_CONTEXT: createCondensedContext(summaries),
   });
 
   const stage8Response = await deepResearch(stage8Prompt, {
@@ -320,13 +352,18 @@ export async function runAnalysisPipeline(
     searchRecency: 'month',
   });
 
+  const customersSummary = await extractStageSummary('customers', stage8Response.analysis);
+
   results.customers = {
     stage: 'customers',
     analysis: stage8Response.analysis,
     citations: stage8Response.citations,
     relatedQuestions: stage8Response.relatedQuestions,
     completedAt: new Date(),
+    summary: customersSummary || undefined,
   };
+
+  // No need to push stage 8 summary (it's the last stage)
 
   await saveStageResult(context.ideaId, 'customers', results.customers);
   await callbacks?.onStageComplete?.('customers', 8, results.customers);

@@ -143,11 +143,12 @@ The `createCondensedContext()` function automatically formats all summaries in a
 
 - [x] Create TypeScript types for summaries (`types/index.ts`)
 - [x] Implement extraction utilities (`lib/ai/extraction.ts`)
-- [x] Update pipeline Stage 1 & 2 with extraction
-- [ ] Update pipeline Stages 3-8 with extraction
-- [ ] Update prompt templates to use `{PREVIOUS_CONTEXT}`
+- [x] Update pipeline Stages 1-8 with extraction ✅ **COMPLETE**
+- [ ] Update prompt templates to use `{PREVIOUS_CONTEXT}` (optional - uses fallback)
 - [ ] Test full pipeline with real idea
-- [ ] Measure token savings
+- [ ] Measure actual token savings
+
+**✅ Status: Core optimization is COMPLETE!** All 8 stages now use structured summaries instead of full text context.
 
 ## Token Savings Example
 
