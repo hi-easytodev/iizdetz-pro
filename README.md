@@ -254,6 +254,34 @@ return {
 #### POST `/api/analyze`
 Запускает полный 8-этапный анализ для идеи.
 
+#### GET `/api/cron/collect-ideas`
+**Автоматический сбор идей** (Vercel Cron Job)
+
+Собирает новые бизнес-идеи из различных источников:
+- Hacker News (Show HN posts) ✅
+- Reddit (r/SaaS, r/Entrepreneur) 🚧 Planned
+- Product Hunt 🚧 Planned
+- Indie Hackers 🚧 Planned
+
+**Cron Schedule:** Ежедневно в 8:00 AM UTC (`0 8 * * *`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "timestamp": "2025-01-22T08:00:00Z",
+  "stats": {
+    "collected": 50,
+    "unique": 45,
+    "saved": 30,
+    "skipped": 15,
+    "errors": 0
+  }
+}
+```
+
+См. подробную документацию: [`docs/CRON_SETUP.md`](./docs/CRON_SETUP.md)
+
 **Request:**
 ```json
 {
@@ -355,7 +383,7 @@ npm run lint     # Линтинг
 
 ## 🎯 Статус проекта
 
-### ✅ Завершено (Этапы 1-4)
+### ✅ Завершено (Этапы 1-5)
 - [x] Базовая структура проекта
 - [x] UI компоненты и дизайн
 - [x] Главная страница с сеткой идей
@@ -370,13 +398,18 @@ npm run lint     # Линтинг
 - [x] **Custom Niche Research** компонент
 - [x] **Детальная страница идеи** с полным UI для 8 этапов анализа
 - [x] **Real-time Progress Indicator** с Server-Sent Events (SSE)
+- [x] **Export результатов анализа** (Markdown)
+- [x] **Фильтрация и поиск по идеям** (текст, категории)
+- [x] **Сравнение идей side-by-side** (/compare page)
+- [x] **Vercel Cron Jobs** для автоматического сбора идей (Hacker News)
 
-### 🚧 В разработке (Этап 5)
-- [ ] Export результатов анализа (Markdown, PDF)
-- [ ] Vercel Cron Jobs для автоматического сбора идей
-- [ ] Сравнение нескольких идей side-by-side
-- [ ] Фильтрация и поиск по идеям
+### 🚧 В разработке (Этап 6)
+- [ ] Export в PDF
+- [ ] Reddit API интеграция для cron jobs
+- [ ] Product Hunt API интеграция
 - [ ] User authentication и saved analyses
+- [ ] Advanced analytics и метрики
+- [ ] Email notifications для новых идей
 
 ---
 
