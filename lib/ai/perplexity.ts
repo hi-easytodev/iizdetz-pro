@@ -7,6 +7,130 @@ import { AIProviderError, retryWithBackoff } from './types';
 
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
+// ============================================
+// ПРЕДУСТАНОВЛЕННЫЕ ИСТОЧНИКИ ДЛЯ DEEP RESEARCH
+// ============================================
+
+export const RESEARCH_SOURCES = {
+  // Startup & Tech
+  STARTUP_PLATFORMS: [
+    'ycombinator.com',
+    'producthunt.com',
+    'indiehackers.com',
+    'betalist.com',
+    'startupgrind.com',
+  ],
+
+  // Social & Communities
+  SOCIAL_MEDIA: [
+    'reddit.com',
+    'twitter.com',
+    'x.com',
+    'linkedin.com',
+  ],
+
+  // Video Platforms
+  VIDEO: [
+    'youtube.com',
+    'tiktok.com',
+  ],
+
+  // Messaging (публичные каналы и группы доступные через web)
+  MESSAGING: [
+    't.me', // Telegram web previews
+  ],
+
+  // Forums & Discussions
+  FORUMS: [
+    'news.ycombinator.com',
+    'stackoverflow.com',
+    'quora.com',
+    'dev.to',
+    'hashnode.com',
+  ],
+
+  // Russian sources
+  RUSSIAN: [
+    'vc.ru',
+    'habr.com',
+    'vk.com',
+  ],
+
+  // News & Blogs
+  NEWS: [
+    'techcrunch.com',
+    'venturebeat.com',
+    'theverge.com',
+    'theinformation.com',
+    'medium.com',
+  ],
+
+  // Reviews & Feedback
+  REVIEWS: [
+    'g2.com',
+    'capterra.com',
+    'trustpilot.com',
+    'play.google.com',
+    'apps.apple.com',
+  ],
+
+  // Funding & Analytics
+  ANALYTICS: [
+    'crunchbase.com',
+    'angellist.com',
+    'pitchbook.com',
+  ],
+};
+
+// Комбинированные наборы для разных типов исследований
+export const RESEARCH_PRESETS = {
+  // Максимальный охват всех источников
+  ALL: [
+    ...RESEARCH_SOURCES.STARTUP_PLATFORMS,
+    ...RESEARCH_SOURCES.SOCIAL_MEDIA,
+    ...RESEARCH_SOURCES.VIDEO,
+    ...RESEARCH_SOURCES.MESSAGING,
+    ...RESEARCH_SOURCES.FORUMS,
+    ...RESEARCH_SOURCES.RUSSIAN,
+    ...RESEARCH_SOURCES.NEWS,
+    ...RESEARCH_SOURCES.REVIEWS,
+    ...RESEARCH_SOURCES.ANALYTICS,
+  ],
+
+  // Для поиска идей (акцент на дискуссиях и проблемах)
+  IDEA_DISCOVERY: [
+    ...RESEARCH_SOURCES.SOCIAL_MEDIA,
+    ...RESEARCH_SOURCES.FORUMS,
+    ...RESEARCH_SOURCES.REVIEWS,
+    'youtube.com',
+    't.me',
+  ],
+
+  // Для анализа рынка (акцент на аналитике и новостях)
+  MARKET_ANALYSIS: [
+    ...RESEARCH_SOURCES.NEWS,
+    ...RESEARCH_SOURCES.ANALYTICS,
+    ...RESEARCH_SOURCES.STARTUP_PLATFORMS,
+    'crunchbase.com',
+    'techcrunch.com',
+  ],
+
+  // Для анализа конкурентов (акцент на отзывах и продуктах)
+  COMPETITOR_RESEARCH: [
+    ...RESEARCH_SOURCES.REVIEWS,
+    'producthunt.com',
+    'g2.com',
+    'capterra.com',
+  ],
+
+  // Русскоязычные источники
+  RUSSIAN_FOCUS: [
+    ...RESEARCH_SOURCES.RUSSIAN,
+    'youtube.com',
+    't.me',
+  ],
+};
+
 export const PERPLEXITY_MODELS = {
   // Online models (with internet access - РЕКОМЕНДУЕТСЯ)
   SONAR_LARGE_ONLINE: 'llama-3.1-sonar-large-128k-online',
@@ -180,6 +304,13 @@ export class PerplexityClient {
   /**
    * Deep Research - собирает информацию из интернета и проводит анализ
    * Использует online модель с citations и related questions
+   *
+   * Поиск проводится по ВСЕМ доступным источникам:
+   * - YouTube, Telegram, форумы, паблики
+   * - Reddit, Twitter/X, LinkedIn
+   * - Новости, блоги, подкасты
+   * - Отзывы пользователей (G2, App Store, Play Store)
+   * - Русскоязычные источники (VC.ru, Habr, VK)
    */
   async deepResearch(
     topic: string,
@@ -187,18 +318,57 @@ export class PerplexityClient {
       searchRecency?: 'month' | 'week' | 'day' | 'hour';
       searchDomains?: string[];
       includeRelatedQuestions?: boolean;
+      preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor' | 'russian';
     }
   ): Promise<{
     analysis: string;
     citations: string[];
     relatedQuestions: string[];
   }> {
+    // Определяем источники на основе пресета или используем все
+    let searchDomains = options?.searchDomains;
+
+    if (!searchDomains && options?.preset) {
+      switch (options.preset) {
+        case 'all':
+          searchDomains = RESEARCH_PRESETS.ALL;
+          break;
+        case 'idea_discovery':
+          searchDomains = RESEARCH_PRESETS.IDEA_DISCOVERY;
+          break;
+        case 'market_analysis':
+          searchDomains = RESEARCH_PRESETS.MARKET_ANALYSIS;
+          break;
+        case 'competitor':
+          searchDomains = RESEARCH_PRESETS.COMPETITOR_RESEARCH;
+          break;
+        case 'russian':
+          searchDomains = RESEARCH_PRESETS.RUSSIAN_FOCUS;
+          break;
+      }
+    }
+
+    // По умолчанию используем IDEA_DISCOVERY для поиска идей
+    if (!searchDomains) {
+      searchDomains = RESEARCH_PRESETS.IDEA_DISCOVERY;
+    }
+
     const messages: AIMessage[] = [
       {
         role: 'system',
-        content: `You are a professional researcher conducting deep analysis.
-Provide comprehensive, well-researched information with citations.
-Be thorough, objective, and cite all sources.`,
+        content: `You are a professional researcher conducting deep analysis across ALL available sources.
+
+SEARCH COMPREHENSIVELY across:
+- Social media (Reddit, Twitter/X, LinkedIn, Facebook, Instagram, VK)
+- Video platforms (YouTube channels AND comments, TikTok, podcasts)
+- Messaging platforms (Telegram channels and public groups, Discord, Slack)
+- Forums (Hacker News, Quora, Stack Overflow, Dev.to, Habr)
+- News & blogs (TechCrunch, Medium, Substack, VC.ru)
+- Reviews & feedback (G2, Capterra, App Store, Google Play reviews)
+- Startup platforms (Product Hunt, Indie Hackers, Y Combinator)
+
+Provide comprehensive, well-researched information with citations from diverse sources.
+Be thorough, objective, and cite all sources including video, social, and messaging platforms.`,
       },
       {
         role: 'user',
@@ -212,7 +382,7 @@ Be thorough, objective, and cite all sources.`,
         returnCitations: true,
         returnRelatedQuestions: options?.includeRelatedQuestions ?? true,
         searchRecencyFilter: options?.searchRecency || 'month',
-        searchDomainFilter: options?.searchDomains,
+        searchDomainFilter: searchDomains, // Используем расширенный список
         maxTokens: 8000,
         temperature: 0.1, // Низкая температура для точности
       });
@@ -269,12 +439,31 @@ function getClient(): PerplexityClient {
 
 /**
  * Deep Research - главная функция для анализа идей
+ *
+ * Поиск по ВСЕМ источникам: YouTube, Telegram, форумы, паблики, соцсети
+ *
+ * @param topic - Тема для исследования
+ * @param options - Опции поиска
+ * @param options.searchRecency - Свежесть данных ('day' | 'week' | 'month')
+ * @param options.preset - Предустановленный набор источников
+ * @param options.searchDomains - Кастомный список доменов
+ *
+ * @example
+ * // Поиск идей (YouTube, Telegram, Reddit, форумы)
+ * await deepResearch('AI business ideas 2025', { preset: 'idea_discovery' });
+ *
+ * // Анализ рынка (новости, аналитика, Crunchbase)
+ * await deepResearch('EdTech market size', { preset: 'market_analysis' });
+ *
+ * // Все источники
+ * await deepResearch('SaaS opportunities', { preset: 'all' });
  */
 export async function deepResearch(
   topic: string,
   options?: {
     searchRecency?: 'month' | 'week' | 'day' | 'hour';
     searchDomains?: string[];
+    preset?: 'all' | 'idea_discovery' | 'market_analysis' | 'competitor' | 'russian';
   }
 ): Promise<{
   analysis: string;

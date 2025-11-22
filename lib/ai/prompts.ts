@@ -32,14 +32,62 @@ RESEARCH FOCUS:
    - Climate tech solutions
    - Web3 practical applications
 
-2. **Sources to analyze**:
-   - Y Combinator recent batches
+2. **Sources to analyze** (максимально широкий охват):
+
+   **Startup Platforms:**
+   - Y Combinator recent batches (news.ycombinator.com)
    - Product Hunt trending products
-   - Hacker News discussions
-   - Tech blogs and publications
-   - Startup funding news
-   - Reddit communities (r/Entrepreneur, r/SaaS, r/startups)
-   - Twitter/X startup discussions
+   - Indie Hackers community discussions
+   - Startup Grind forums
+   - Beta List new startups
+
+   **Social Media & Communities:**
+   - Reddit communities (r/Entrepreneur, r/SaaS, r/startups, r/SideProject, r/Business_Ideas)
+   - Twitter/X startup discussions (#buildinpublic, #indiehackers, #startups)
+   - LinkedIn posts and articles
+   - Facebook groups (Startup/Business groups)
+   - Instagram business content creators
+
+   **Video Content:**
+   - YouTube channels (business ideas, startup analysis, entrepreneurship)
+   - YouTube comments (pain points and feedback)
+   - TikTok business trends
+   - Video podcasts (My First Million, All-In, etc.)
+
+   **Messaging Platforms:**
+   - Telegram channels (startup, бизнес, технологии)
+   - Telegram groups discussions
+   - Discord servers (startup communities)
+   - Slack communities
+
+   **Forums & Discussion Boards:**
+   - Hacker News (news.ycombinator.com)
+   - Stack Overflow trends
+   - Quora business questions
+   - Dev.to community
+   - GitHub Discussions
+   - Habr (ru) tech discussions
+   - VC.ru (ru) startup news
+
+   **News & Blogs:**
+   - TechCrunch, VentureBeat
+   - The Information, The Verge
+   - Medium publications
+   - Substack newsletters
+   - Tech blogs and personal blogs
+
+   **Russian-language sources:**
+   - VC.ru статьи и комментарии
+   - Habr публикации
+   - Telegram каналы (IT, бизнес, стартапы)
+   - VK паблики (бизнес-идеи)
+   - YouTube каналы на русском
+
+   **Industry-specific:**
+   - AngelList job postings (what companies are hiring for)
+   - Crunchbase funding announcements
+   - G2 and Capterra reviews (gaps in existing tools)
+   - App Store / Google Play reviews (user pain points)
 
 3. **What to look for**:
    - Problems people are actively discussing
