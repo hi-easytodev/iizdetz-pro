@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+:root {
+  /* Темная тема (основная) */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+
+  /* Карточки и элементы */
+  --card-bg: #1a1a2e;
+  --card-highlight: #2d1b69;
+
+  /* Акценты */
+  --accent-purple: #8b5cf6;
+  --accent-gold: #d4a574;
+
+  /* Текст */
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+
+  /* Границы */
+  --border: #2a2a3e;
+
+  /* Статусы */
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card-bg);
+  --color-card-highlight: var(--card-highlight);
+  --color-primary: var(--accent-purple);
+  --color-secondary: var(--accent-gold);
+  --color-border: var(--border);
+  --color-text-secondary: var(--text-secondary);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Кастомные утилиты */
+.gradient-purple-pink {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-purple);
+}
