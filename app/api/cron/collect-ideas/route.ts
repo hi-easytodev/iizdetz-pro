@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { collectIdeas, deduplicateIdeas, scoreIdeas, type ScrapedIdea } from '@/lib/scraper';
 import { query } from '@/lib/db';
+import { sendNewIdeasEmail } from '@/lib/email/resend';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // 1 minute timeout
@@ -95,7 +96,63 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Step 5: Return summary
+    // Step 5: Send email notifications to subscribed users
+    let emailsSent = 0;
+    if (savedCount > 0) {
+      try {
+        // Get users who want daily notifications
+        const usersResult = await query(
+          `SELECT id, email, name FROM users
+           WHERE email_notifications = true
+             AND notification_frequency = 'daily'
+             AND email IS NOT NULL`
+        );
+
+        const topIdeas = scoredIdeas.slice(0, 5).map((idea) => ({
+          title: idea.title,
+          description: idea.description.slice(0, 200),
+          source: idea.source,
+          score: (idea.metadata?.upvotes || 0) + (idea.metadata?.comments || 0) * 2,
+          url: idea.sourceUrl,
+        }));
+
+        // Send emails in parallel
+        const emailPromises = usersResult.rows.map(async (user: any) => {
+          try {
+            await sendNewIdeasEmail({
+              to: user.email,
+              userName: user.name || 'there',
+              ideas: topIdeas,
+              totalIdeas: savedCount,
+            });
+
+            // Log notification
+            await query(
+              `INSERT INTO email_notifications (user_id, email, type, ideas_count, status)
+               VALUES ($1, $2, 'new_ideas', $3, 'sent')`,
+              [user.id, user.email, savedCount]
+            );
+
+            emailsSent++;
+          } catch (error) {
+            console.error(`[Cron] Failed to send email to ${user.email}:`, error);
+            // Log failed notification
+            await query(
+              `INSERT INTO email_notifications (user_id, email, type, ideas_count, status)
+               VALUES ($1, $2, 'new_ideas', $3, 'failed')`,
+              [user.id, user.email, savedCount]
+            );
+          }
+        });
+
+        await Promise.allSettled(emailPromises);
+        console.log(`[Cron] Sent ${emailsSent} email notifications`);
+      } catch (error) {
+        console.error('[Cron] Error sending email notifications:', error);
+      }
+    }
+
+    // Step 6: Return summary
     const summary = {
       success: true,
       timestamp: new Date().toISOString(),
@@ -105,6 +162,7 @@ export async function GET(request: NextRequest) {
         saved: savedCount,
         skipped: skippedCount,
         errors: errors.length,
+        emailsSent,
       },
       errors: errors.length > 0 ? errors : undefined,
     };
